@@ -1,0 +1,97 @@
+the data structure allows you to do each of these operations in almost O(1) time on average.
+
+/**********
+if we combine both optimizations - path compression with union by size / rank - we will reach nearly constant time queries. It turns out, that the final amortized time complexity is O(α(n)), where α(n) is the inverse Ackermann function, which grows so slowly, that it doesn't exceed 4 for all reasonable n (approximately n<10^600).
+Amortized time is the way to express the time complexity when an algorithm has the very bad time complexity only once in a while besides the time complexity that happens most of time. average time taken per operation, if you do many operations. E.g. in our case a single call might take O(logn) in the worst case, but if we do m such calls back to back we will end up with an average time of O(α(n)).
+DSU with union by size / rank, but without path compression works in O(logn) time per query.
+***********/
+
+#include<bits/stdc++.h>
+#define fast ios_base::sync_with_stdio(0);cin.tie(NULL);cout.tie(NULL)
+#define f(i,a,b) for(i=a;i<b;i++)
+#define fr(i,a,b) for(i=a;i>=b;i--)
+#define endl '\n'
+#define ll long long int
+#define pb push_back
+using namespace std;
+ 
+int root[1000005],weight[1000005];
+vector<int>vec[26];
+ 
+int findroot(int x)
+{
+	while(x!=root[x])
+	{
+		root[x]=root[root[x]];          //path compression or caching O(logN) for N calls on avg
+		x=root[x];
+	}
+	return x;
+}
+
+/********************   Better path compression O(logN) on avg
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    return parent[v] = find_set(parent[v]);
+}
+********************/ 
+
+/********************   union by rank
+void make_set(int v) {
+    parent[v] = v;
+    rank[v] = 0;
+}
+
+void union_sets(int a, int b) {
+    a = find_set(a);
+    b = find_set(b);
+    if (a != b) {
+        if (rank[a] < rank[b])
+            swap(a, b);
+        parent[b] = a;
+        if (rank[a] == rank[b])
+            rank[a]++;
+    }
+}
+********************/ 
+
+
+void merge(int x,int y)          //two approaches of using rank- 1. use the size of the trees as rank, or 2. one we use the depth of the tree 
+{			//both optimization approaches are equal^
+	x=findroot(x);
+	y=findroot(y);
+ 
+	if(x==y)
+		return;
+ 
+	if(weight[x]>weight[y])			//using weights to avoid the chaining of nodes leading to O(N) and instead get balanced tree
+		weight[x]+=weight[y],root[y]=x;
+	else weight[y]+=weight[x],root[x]=y;
+}
+ 
+int main()
+{	
+	int n,i,j,ans=0;
+	cin>>n;
+	string s;
+	f(i,0,n)
+	{
+		root[i]=i;
+		weight[i]=1;
+	}
+	f(i,0,n)
+	{
+		cin>>s;
+		for(char c:s)
+			vec[c-'a'].pb(i);
+	}
+	f(i,0,26)
+	{
+		f(j,1,vec[i].size())
+			merge(vec[i][j-1],vec[i][j]);
+	}
+	f(i,0,n)
+		if(root[i]==i)
+			ans++;
+	cout<<ans;
+}
